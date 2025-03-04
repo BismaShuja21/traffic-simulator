@@ -1,0 +1,30 @@
+.report-container {
+  padding: 1rem;
+  max-width: 32rem; /* max-w-2xl */
+  margin: 0 auto; /* mx-auto */
+  background-color: #2d3748; /* bg-gray-900 */
+  color: white;
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-lg */
+}
+
+.report-title {
+  font-size: 1.25rem; /* text-xl */
+  font-weight: bold;
+  margin-bottom: 1rem; /* mb-4 */
+  text-align: center;
+}
+
+.report-content {
+  background-color: #4a5568; /* bg-gray-800 */
+  padding: 1rem; /* p-4 */
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
+.report-content p {
+  margin-bottom: 0.5rem; /* mb-2 */
+}
+
+.report-content strong {
+  font-weight: bold;
+}
