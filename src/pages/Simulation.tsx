@@ -6,6 +6,7 @@ import ReportPage from "./ReportPage";
 import Tpm from "./Tpm";
 import "./Simulation.css"; // Import the CSS file
 import MarkovChain from "./MarkovChain";
+import Info from "./Info";
 
 interface TrafficData {
   time: number;
@@ -129,6 +130,7 @@ const TrafficSimulation: React.FC = () => {
           textColor="inherit"
           indicatorColor="primary"
         >
+          <Tab label="Info" />
           <Tab label="Simulation" className="text-white" />
           <Tab label="Report" className="text-white" />
           <Tab label="TPM" className="text-white" />
@@ -139,8 +141,10 @@ const TrafficSimulation: React.FC = () => {
       {/* Main Content */}
       <main className="main-content">
         <div className="content-wrapper">
+          {/* {Info Tab} */}
+          {tab === 0 && <Info />}
           {/* Simulation Tab */}
-          {tab === 0 && (
+          {tab === 1 && (
             <div className="space-y-4">
               <Controls
                 running={running}
@@ -158,7 +162,7 @@ const TrafficSimulation: React.FC = () => {
           )}
 
           {/* Report Tab */}
-          {tab === 1 && report && (
+          {tab === 2 && report && (
             <ReportPage
               totalTime={report.totalTime}
               totalVehicles={report.totalVehicles}
@@ -168,8 +172,8 @@ const TrafficSimulation: React.FC = () => {
           )}
 
           {/* TPM Tab */}
-          {tab === 2 && <Tpm />}
-          {tab === 3 && <MarkovChain />}
+          {tab === 3 && <Tpm />}
+          {tab === 4 && <MarkovChain />}
         </div>
       </main>
     </div>

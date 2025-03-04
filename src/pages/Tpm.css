@@ -1,5 +1,6 @@
 .tpm-container {
   padding: 1rem;
+  padding-top: 0;
   max-width: 40rem; /* max-w-lg */
   margin: 0 auto; /* mx-auto */
   background-color: #2d3748; /* bg-gray-900 */
