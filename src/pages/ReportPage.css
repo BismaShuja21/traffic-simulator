@@ -1,6 +1,6 @@
 .report-container {
   padding: 1rem;
-  max-width: 32rem; /* max-w-2xl */
+  max-width: 62rem; /* max-w-2xl */
   margin: 0 auto; /* mx-auto */
   background-color: #2d3748; /* bg-gray-900 */
   color: white;
@@ -12,13 +12,14 @@
   font-size: 1.25rem; /* text-xl */
   font-weight: bold;
   margin-bottom: 1rem; /* mb-4 */
-  text-align: center;
+  text-align: left;
 }
 
 .report-content {
   background-color: #4a5568; /* bg-gray-800 */
   padding: 1rem; /* p-4 */
   border-radius: 0.5rem; /* rounded-lg */
+  text-align: left;
 }
 
 .report-content p {
@@ -27,4 +28,19 @@
 
 .report-content strong {
   font-weight: bold;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.report-table td {
+  padding: 0.5rem;
+  border: 1px solid #4a5568; /* border-gray-800 */
+}
+
+.report-table tr:nth-child(even) {
+  background-color: #2d374897; /* bg-gray-900 */
 }
