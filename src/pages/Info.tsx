@@ -21,19 +21,19 @@ const Info: React.FC = () => {
       </p>
 
       <h3>States in the Markov Chain</h3>
-      <ul>
-        <li>
+      <div>
+        <p>
           <strong>Empty (Low Traffic):</strong> Few or no vehicles on the road.
-        </li>
-        <li>
+        </p>
+        <p>
           <strong>Moderate (Medium Traffic):</strong> Some traffic but still
           flowing.
-        </li>
-        <li>
+        </p>
+        <p>
           <strong>Congested (High Traffic):</strong> Heavy traffic, slow
           movement.
-        </li>
-      </ul>
+        </p>
+      </div>
     </div>
   );
 };
