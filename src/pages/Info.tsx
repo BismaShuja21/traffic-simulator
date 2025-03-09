@@ -6,11 +6,11 @@ const Info: React.FC = () => {
     <div className="info-container">
       {/* <h2 className="info-title">Traffic Simulation Process</h2> */}
 
-      <h3>What is Traffic Simulation?</h3>
+      <h3>What does this porject do?</h3>
       <p>
-        Traffic simulation models analyze and predict vehicle movement at
-        intersections. The simulation helps in understanding congestion
-        patterns, optimizing signal timings, and evaluating road design changes.
+        Road Traffic simulation models analyze and predict traffic status on a
+        road. The simulation helps in understanding congestion patterns, and
+        optimizing signal timings.
       </p>
 
       <h3>What is a Markov Chain?</h3>
@@ -23,8 +23,7 @@ const Info: React.FC = () => {
       <h3>States in the Markov Chain</h3>
       <ul>
         <li>
-          <strong>Empty (Low Traffic):</strong> Few or no vehicles at the
-          intersection.
+          <strong>Empty (Low Traffic):</strong> Few or no vehicles on the road.
         </li>
         <li>
           <strong>Moderate (Medium Traffic):</strong> Some traffic but still

@@ -14,13 +14,15 @@ interface TrafficData {
   vehiclesExited: number;
   totalVehicles: number;
   vehicles: number;
-  state: "empty" | "moderate" | "congested";
+  state: StateTraffic;
 }
 interface ReportData {
   totalTime: number;
   totalVehicles: number;
   totalExits: number;
 }
+
+type StateTraffic = "empty" | "moderate" | "congested";
 
 const TrafficSimulation: React.FC = () => {
   const [running, setRunning] = useState<boolean>(false);
@@ -32,28 +34,35 @@ const TrafficSimulation: React.FC = () => {
     "Simulation not started"
   );
 
-  // Poisson process for arrivals and exits
-  const poissonProcess = (lambda: number): number =>
-    Math.random() < lambda ? 1 : 0;
+  // Transition Probability Matrix (TPM) for state changes based on which arrival rates amd exits rates are calculated
+  // const TPM: Record<string, Record<string, number>> = {
+  //   empty: { empty: 0.7, moderate: 0.3, congested: 0.0 },
+  //   moderate: { empty: 0.2, moderate: 0.6, congested: 0.2 },
+  //   congested: { empty: 0.0, moderate: 0.3, congested: 0.7 },
+  // };
 
-  // Transition Probability Matrix (TPM) for state changes
-  const TPM: Record<string, Record<string, number>> = {
-    empty: { empty: 0.7, moderate: 0.3, congested: 0.0 },
-    moderate: { empty: 0.2, moderate: 0.6, congested: 0.2 },
-    congested: { empty: 0.0, moderate: 0.3, congested: 0.7 },
+  const poissonRandom = (lambda: number) => {
+    let L = Math.exp(-lambda);
+    let k = 0;
+    let p = 1;
+    do {
+      k++;
+      p *= Math.random();
+    } while (p > L);
+    return k - 1;
   };
 
-  const getNextState = (
-    currentState: "empty" | "moderate" | "congested"
-  ): "empty" | "moderate" | "congested" => {
-    const rand = Math.random();
-    let cumulative = 0;
-    for (let state in TPM[currentState]) {
-      cumulative += TPM[currentState][state];
-      if (rand <= cumulative)
-        return state as "empty" | "moderate" | "congested";
+  const getTrafficParameters = (state: "empty" | "moderate" | "congested") => {
+    switch (state) {
+      case "empty":
+        return { lambdaArrival: 0.3, lambdaExit: 0.7 };
+      case "moderate":
+        return { lambdaArrival: 0.5, lambdaExit: 0.5 };
+      case "congested":
+        return { lambdaArrival: 0.3, lambdaExit: 0.7 };
+      default:
+        return { lambdaArrival: 0.5, lambdaExit: 0.5 };
     }
-    return currentState;
   };
 
   useEffect(() => {
@@ -62,38 +71,42 @@ const TrafficSimulation: React.FC = () => {
     const interval = setInterval(() => {
       setTime((prev) => prev + 1);
 
-      const lambdaArrival = 0.5;
-      const lambdaExit = 0.3; // Vehicles exiting probability
-
-      const arrivals = poissonProcess(lambdaArrival);
-      const exits = poissonProcess(lambdaExit);
       const lastState = trafficData.length
         ? trafficData[trafficData.length - 1]
         : { totalVehicles: 0, state: "empty" };
 
-      // Ensure vehicles exiting doesn't exceed current vehicles on road
-      const validExits = Math.min(exits, lastState.totalVehicles);
-
-      // Update vehicle count
-      const totalVehicles = lastState.totalVehicles + arrivals - validExits;
-      const nextState = getNextState(
-        lastState.state as "empty" | "moderate" | "congested"
+      const { lambdaArrival, lambdaExit } = getTrafficParameters(
+        lastState.state as StateTraffic
       );
+
+      const arrivals = poissonRandom(lambdaArrival);
+      const exits = Math.min(
+        poissonRandom(lambdaExit),
+        lastState.totalVehicles
+      );
+
+      const totalVehicles = lastState.totalVehicles + arrivals - exits;
+
+      // More accurate state transition based on vehicle count
+      let nextState: "empty" | "moderate" | "congested";
+      if (totalVehicles < 5) nextState = "empty";
+      else if (totalVehicles < 12) nextState = "moderate";
+      else nextState = "congested";
 
       setTrafficData((prev) => [
         ...prev,
         {
           time,
           vehiclesArrived: arrivals,
-          vehiclesExited: validExits,
-          vehicles: totalVehicles,
+          vehiclesExited: exits,
           totalVehicles,
+          vehicles: totalVehicles,
           state: nextState,
         },
       ]);
 
       setStatusMessage(
-        `Time: ${time}s | Arrivals: ${arrivals} | Exits: ${validExits} | On Road: ${totalVehicles} | Traffic: ${nextState.toUpperCase()}`
+        `Time: ${time}s | Arrivals: ${arrivals} | Exits: ${exits} | On Road: ${totalVehicles} | Traffic: ${nextState.toUpperCase()}`
       );
     }, 1000);
 
@@ -120,7 +133,7 @@ const TrafficSimulation: React.FC = () => {
     <div className="container">
       {/* Header */}
       <header className="header">
-        <h1 className="header-title">Traffic Simulation at Intersections</h1>
+        <h1 className="header-title">Road Traffic Simulation</h1>
         {/* Tabs in the second row */}
         <Tabs
           value={tab}
