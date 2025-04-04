@@ -71,7 +71,7 @@ const MarkovChain: React.FC<MarkovChainProps> = ({ tpm }) => {
           left: 670,
         }}
       >
-        {tpm ? tpm.moderate.congested.toFixed(2) : 0.2}
+        {tpm ? tpm.congested.moderate.toFixed(2) : 0.3}
       </p>
       {/* congested -> moderate */}
       <p
@@ -83,7 +83,7 @@ const MarkovChain: React.FC<MarkovChainProps> = ({ tpm }) => {
           left: 760,
         }}
       >
-        {tpm ? tpm.congested.moderate.toFixed(2) : 0.4}
+        {tpm ? tpm.moderate.congested.toFixed(2) : 0.2}
       </p>
       {/* congested -> congested */}
       <p
@@ -95,7 +95,7 @@ const MarkovChain: React.FC<MarkovChainProps> = ({ tpm }) => {
           left: 800,
         }}
       >
-        {tpm ? tpm.congested.congested.toFixed(2) : 0.6}
+        {tpm ? tpm.congested.congested.toFixed(2) : 0.7}
       </p>
     </div>
   );
