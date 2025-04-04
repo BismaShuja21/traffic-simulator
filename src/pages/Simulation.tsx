@@ -106,8 +106,8 @@ const TrafficSimulation: React.FC = () => {
     const avgExitRate = totalExits / (recentEntries.length || 1);
 
     return {
-      lambdaArrival: Math.max(0.1, Math.min(1, avgArrivalRate / 10)),
-      lambdaExit: Math.max(0.1, Math.min(1, avgExitRate / 10)),
+      lambdaArrival: Math.max(0.1, Math.min(2, avgArrivalRate / 0.65)),
+      lambdaExit: Math.max(0.1, Math.min(1, avgExitRate / 1.5)),
     };
   };
 
