@@ -6,12 +6,23 @@ const Info: React.FC = () => {
     <div className="info-container">
       {/* <h2 className="info-title">Traffic Simulation Process</h2> */}
 
-      <h3>What does this porject do?</h3>
+      <h3>What does this project do?</h3>
       <p>
         Road Traffic simulation models analyze and predict traffic status on a
         road. The simulation helps in understanding congestion patterns, and
-        optimizing signal timings.
+        optimizing signal timings.The app offers two modes:
       </p>
+      <div>
+        <p>
+          <strong>Static Mode:</strong> A fixed traffic model where the
+          probabilities of state transitions are predefined.
+        </p>
+        <p>
+          <strong>Dynamic Mode:</strong> An adaptive model that updates the
+          transition probabilities based on real-time data and traffic
+          conditions.
+        </p>
+      </div>
 
       <h3>What is a Markov Chain?</h3>
       <p>
