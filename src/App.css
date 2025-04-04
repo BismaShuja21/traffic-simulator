@@ -1,9 +1,9 @@
 #root {
-  height: "100%";
+  height: max-content;
   width: 1280px;
   /* margin: 0; */
   /* padding: 0; */
-  overflow: hidden;
+  overflow-x: hidden;
   background-color: #111;
   display: flex;
   justify-content: center;

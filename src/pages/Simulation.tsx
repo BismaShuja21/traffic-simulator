@@ -1,26 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Tabs, Tab } from "@mui/material";
+import { Tabs, Tab, Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import Chart from "../components/Chart";
 import Controls from "../components/Controls";
 import ReportPage from "./ReportPage";
-import Tpm from "./Tpm";
-import "./Simulation.css"; // Import the CSS file
+import "./Simulation.css";
 import MarkovChain from "./MarkovChain";
 import Info from "./Info";
-
-interface TrafficData {
-  time: number;
-  vehiclesArrived: number;
-  vehiclesExited: number;
-  totalVehicles: number;
-  vehicles: number;
-  state: "empty" | "moderate" | "congested";
-}
-interface ReportData {
-  totalTime: number;
-  totalVehicles: number;
-  totalExits: number;
-}
+import { TrafficData, ReportData, StateTraffic, TPMType } from "../types";
+import Tpm from "./Tpm";
+import { getTrafficParameters } from "../utils/helper";
 
 const TrafficSimulation: React.FC = () => {
   const [running, setRunning] = useState<boolean>(false);
@@ -31,29 +19,96 @@ const TrafficSimulation: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>(
     "Simulation not started"
   );
+  const [stateTransitions, setStateTransitions] = useState<
+    Record<string, Record<string, number>>
+  >({
+    empty: { empty: 0, moderate: 0, congested: 0 },
+    moderate: { empty: 0, moderate: 0, congested: 0 },
+    congested: { empty: 0, moderate: 0, congested: 0 },
+  });
+  const [dynamicTPM, setDynamicTPM] = useState<TPMType>({
+    empty: { empty: 0, moderate: 0, congested: 0 },
+    moderate: { empty: 0, moderate: 0, congested: 0 },
+    congested: { empty: 0, moderate: 0, congested: 0 },
+  });
+  const [mode, setMode] = useState<"static" | "dynamic">("dynamic");
 
-  // Poisson process for arrivals and exits
-  const poissonProcess = (lambda: number): number =>
-    Math.random() < lambda ? 1 : 0;
-
-  // Transition Probability Matrix (TPM) for state changes
-  const TPM: Record<string, Record<string, number>> = {
-    empty: { empty: 0.7, moderate: 0.3, congested: 0.0 },
-    moderate: { empty: 0.2, moderate: 0.6, congested: 0.2 },
-    congested: { empty: 0.0, moderate: 0.3, congested: 0.7 },
+  const updateTransitions = (
+    prevState: StateTraffic,
+    newState: StateTraffic
+  ) => {
+    setStateTransitions((prev) => ({
+      ...prev,
+      [prevState]: {
+        ...prev[prevState],
+        [newState]: prev[prevState][newState] + 1,
+      },
+    }));
   };
 
-  const getNextState = (
-    currentState: "empty" | "moderate" | "congested"
-  ): "empty" | "moderate" | "congested" => {
-    const rand = Math.random();
-    let cumulative = 0;
-    for (let state in TPM[currentState]) {
-      cumulative += TPM[currentState][state];
-      if (rand <= cumulative)
-        return state as "empty" | "moderate" | "congested";
+  const calculateDynamicTPM = () => {
+    const newTPM: TPMType = {
+      empty: { empty: 0, moderate: 0, congested: 0 },
+      moderate: { empty: 0, moderate: 0, congested: 0 },
+      congested: { empty: 0, moderate: 0, congested: 0 },
+    };
+
+    Object.keys(stateTransitions).forEach((state) => {
+      const totalTransitions = Object.values(
+        stateTransitions[state as StateTraffic]
+      ).reduce((acc, val) => acc + val, 0);
+
+      Object.keys(stateTransitions[state as StateTraffic]).forEach(
+        (nextState) => {
+          newTPM[state as StateTraffic][nextState as StateTraffic] =
+            totalTransitions > 0
+              ? stateTransitions[state as StateTraffic][
+                  nextState as StateTraffic
+                ] / totalTransitions
+              : 0;
+        }
+      );
+    });
+
+    return newTPM;
+  };
+
+  useEffect(() => {
+    if (mode === "dynamic") {
+      setDynamicTPM(calculateDynamicTPM());
     }
-    return currentState;
+  }, [stateTransitions, mode]);
+
+  const poissonRandom = (lambda: number) => {
+    let L = Math.exp(-lambda);
+    let k = 0;
+    let p = 1;
+    do {
+      k++;
+      p *= Math.random();
+    } while (p > L);
+    return k - 1;
+  };
+
+  //for dynamic
+  const getDynamicTrafficParameters = (recentData: TrafficData[]) => {
+    const recentEntries = recentData.slice(-10);
+
+    const totalArrivals = recentEntries.reduce(
+      (acc, d) => acc + d.vehiclesArrived,
+      0
+    );
+    const totalExits = recentEntries.reduce(
+      (acc, d) => acc + d.vehiclesExited,
+      0
+    );
+    const avgArrivalRate = totalArrivals / (recentEntries.length || 1);
+    const avgExitRate = totalExits / (recentEntries.length || 1);
+
+    return {
+      lambdaArrival: Math.max(0.1, Math.min(2, avgArrivalRate / 0.65)),
+      lambdaExit: Math.max(0.1, Math.min(1, avgExitRate / 1.5)),
+    };
   };
 
   useEffect(() => {
@@ -62,43 +117,49 @@ const TrafficSimulation: React.FC = () => {
     const interval = setInterval(() => {
       setTime((prev) => prev + 1);
 
-      const lambdaArrival = 0.5;
-      const lambdaExit = 0.3; // Vehicles exiting probability
+      const lastState: { totalVehicles: number; state: StateTraffic } =
+        trafficData.length
+          ? trafficData[trafficData.length - 1]
+          : { totalVehicles: 0, state: "empty" };
 
-      const arrivals = poissonProcess(lambdaArrival);
-      const exits = poissonProcess(lambdaExit);
-      const lastState = trafficData.length
-        ? trafficData[trafficData.length - 1]
-        : { totalVehicles: 0, state: "empty" };
+      const { lambdaArrival, lambdaExit } =
+        mode === "dynamic"
+          ? getDynamicTrafficParameters(trafficData)
+          : getTrafficParameters(lastState.state);
 
-      // Ensure vehicles exiting doesn't exceed current vehicles on road
-      const validExits = Math.min(exits, lastState.totalVehicles);
-
-      // Update vehicle count
-      const totalVehicles = lastState.totalVehicles + arrivals - validExits;
-      const nextState = getNextState(
-        lastState.state as "empty" | "moderate" | "congested"
+      const arrivals = poissonRandom(lambdaArrival);
+      const exits = Math.min(
+        poissonRandom(lambdaExit),
+        lastState.totalVehicles
       );
+      const totalVehicles = lastState.totalVehicles + arrivals - exits;
+
+      let nextState: StateTraffic;
+      if (totalVehicles < 5) nextState = "empty";
+      else if (totalVehicles < 12) nextState = "moderate";
+      else nextState = "congested";
+
+      updateTransitions(lastState.state, nextState);
 
       setTrafficData((prev) => [
         ...prev,
         {
           time,
           vehiclesArrived: arrivals,
-          vehiclesExited: validExits,
-          vehicles: totalVehicles,
+          vehiclesExited: exits,
           totalVehicles,
+          vehicles: totalVehicles,
           state: nextState,
         },
       ]);
 
       setStatusMessage(
-        `Time: ${time}s | Arrivals: ${arrivals} | Exits: ${validExits} | On Road: ${totalVehicles} | Traffic: ${nextState.toUpperCase()}`
+        `Time: ${time}s | Arrivals: ${arrivals} | Exits: ${exits} | On Road: ${totalVehicles} | Traffic: ${nextState.toUpperCase()}`
       );
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [running, trafficData, time]);
+  }, [running, trafficData, time, mode]);
 
   const stopSimulation = () => {
     setRunning(false);
@@ -118,10 +179,8 @@ const TrafficSimulation: React.FC = () => {
 
   return (
     <div className="container">
-      {/* Header */}
       <header className="header">
-        <h1 className="header-title">Traffic Simulation at Intersections</h1>
-        {/* Tabs in the second row */}
+        <h1 className="header-title">Road Traffic Simulation</h1>
         <Tabs
           value={tab}
           onChange={(_e, newValue) => setTab(newValue)}
@@ -138,12 +197,9 @@ const TrafficSimulation: React.FC = () => {
         </Tabs>
       </header>
 
-      {/* Main Content */}
       <main className="main-content">
         <div className="content-wrapper">
-          {/* {Info Tab} */}
           {tab === 0 && <Info />}
-          {/* Simulation Tab */}
           {tab === 1 && (
             <div className="space-y-4">
               <Controls
@@ -155,13 +211,28 @@ const TrafficSimulation: React.FC = () => {
                 onStop={stopSimulation}
                 onReset={resetSimulation}
               />
-              {/* Display live status updates */}
+              <RadioGroup
+                row
+                value={mode}
+                onChange={(e) =>
+                  setMode(e.target.value as "static" | "dynamic")
+                }
+              >
+                <FormControlLabel
+                  value="static"
+                  control={<Radio />}
+                  label="Static TPM"
+                />
+                <FormControlLabel
+                  value="dynamic"
+                  control={<Radio />}
+                  label="Dynamic TPM"
+                />
+              </RadioGroup>
               <p className="status-message">{statusMessage}</p>
               <Chart data={trafficData} />
             </div>
           )}
-
-          {/* Report Tab */}
           {tab === 2 && report && (
             <ReportPage
               totalTime={report.totalTime}
@@ -170,10 +241,15 @@ const TrafficSimulation: React.FC = () => {
               trafficData={trafficData}
             />
           )}
-
-          {/* TPM Tab */}
-          {tab === 3 && <Tpm />}
-          {tab === 4 && <MarkovChain />}
+          {tab === 3 && (
+            <Tpm
+              useDefault={mode === "static"}
+              tpm={mode === "dynamic" ? dynamicTPM : undefined}
+            />
+          )}
+          {tab === 4 && (
+            <MarkovChain tpm={mode === "dynamic" ? dynamicTPM : undefined} />
+          )}
         </div>
       </main>
     </div>
