@@ -9,6 +9,7 @@ import Info from "./Info";
 import { TrafficData, ReportData, StateTraffic, TPMType } from "../types";
 import Tpm from "./Tpm";
 import { getTrafficParameters } from "../utils/helper";
+import StateFrequencyChart from "../components/StateFrequencyChart";
 
 const TrafficSimulation: React.FC = () => {
   const [running, setRunning] = useState<boolean>(false);
@@ -230,7 +231,79 @@ const TrafficSimulation: React.FC = () => {
                 />
               </RadioGroup>
               <p className="status-message">{statusMessage}</p>
-              <Chart data={trafficData} />
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div style={{ width: 20, height: 40 }} />
+                <h3>
+                  Shows the number of vehicles arriving at each simulation
+                  timestep.
+                </h3>
+                <Chart
+                  data={trafficData}
+                  dataKey="vehiclesArrived"
+                  title="Vehicles Arrived"
+                  color="#4A90E2"
+                />
+                <div style={{ width: 20, height: 40 }} />
+                <h3>
+                  Displays how many vehicles exited the road during each
+                  timestep.
+                </h3>
+                <Chart
+                  data={trafficData}
+                  dataKey="vehiclesExited"
+                  title="Vehicles Exited"
+                  color="#F5A623"
+                />
+                <div style={{ width: 20, height: 40 }} />
+                <h3>
+                  Shows the number of vehicles on the road at each simulation
+                  timestep.
+                </h3>
+                <Chart
+                  data={trafficData}
+                  dataKey="totalVehicles"
+                  title="Total Vehicles"
+                  color="#D0021B"
+                />
+                <div style={{ width: 20, height: 40 }} />
+                <h3>
+                  Visualizes the categorized traffic state at each point in
+                  time.
+                </h3>
+                <Chart
+                  data={trafficData.map((d) => ({
+                    ...d,
+                    stateNumeric:
+                      d.state === "empty" ? 0 : d.state === "moderate" ? 1 : 2,
+                  }))}
+                  dataKey="stateNumeric"
+                  title="Traffic State (0=Empty, 1=Moderate, 2=Congested)"
+                  color="#9013FE"
+                />
+                <div style={{ width: 20, height: 40 }} />
+                <h3 className="text-sm text-gray-500">
+                  Shows the frequency of transitions between states.
+                </h3>
+                <div
+                  style={{
+                    flexDirection: "row",
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ width: "35%" }}>
+                    <p style={{ textAlign: "justify", paddingLeft: "50px" }}>
+                      This bar chart highlights which traffic state occurred
+                      most frequently over time. It helps in identifying whether
+                      the simulation mostly experienced light, moderate, or
+                      heavy traffic conditions. Use this insight to evaluate the
+                      efficiency of road usage or to test different TPM
+                      strategies.
+                    </p>
+                  </div>
+                  <StateFrequencyChart data={trafficData} />
+                </div>
+              </div>
             </div>
           )}
           {tab === 2 && report && (

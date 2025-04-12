@@ -12,18 +12,28 @@ import {
 
 interface TrafficData {
   time: number;
-  vehicles: number;
+  [key: string]: any; // to allow dynamic access like vehiclesArrived, etc.
 }
 
 interface ChartProps {
   data: TrafficData[];
+  dataKey: string;
+  title: string;
+  yLabel?: string;
+  color?: string;
 }
 
-const Chart: React.FC<ChartProps> = ({ data }) => {
+const Chart: React.FC<ChartProps> = ({
+  data,
+  dataKey,
+  title,
+  yLabel,
+  color,
+}) => {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" opacity={0.4} />
         <XAxis
           dataKey="time"
           label={{
@@ -33,15 +43,22 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
           }}
         />
         <YAxis
-          label={{ value: "Arrivals", angle: -90, position: "insideLeft" }}
+          label={{
+            value: yLabel || title,
+            angle: -90,
+            position: "insideLeft",
+          }}
         />
         <Tooltip />
         <Legend align="center" />
         <Line
           type="monotone"
-          dataKey="vehicles"
-          stroke="#8884d8"
-          name="Vehicle Arrivals Over Time"
+          dataKey={dataKey}
+          stroke={color || "#8884d8"}
+          strokeWidth={1.5}
+          name={title}
+          dot={false}
+          strokeOpacity={0.6}
         />
       </LineChart>
     </ResponsiveContainer>
