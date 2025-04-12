@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Tabs, Tab, Radio, RadioGroup, FormControlLabel } from "@mui/material";
-import Chart from "../components/Chart";
+import {
+  Tabs,
+  Tab,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  TextField,
+  Box,
+} from "@mui/material";
+// import Chart from "../components/Chart";
 import Controls from "../components/Controls";
 import ReportPage from "./ReportPage";
 import "./Simulation.css";
@@ -10,6 +18,7 @@ import { TrafficData, ReportData, StateTraffic, TPMType } from "../types";
 import Tpm from "./Tpm";
 import { getTrafficParameters } from "../utils/helper";
 import StateFrequencyChart from "../components/StateFrequencyChart";
+import ChartSection from "../components/ChartSection";
 
 const TrafficSimulation: React.FC = () => {
   const [running, setRunning] = useState<boolean>(false);
@@ -33,6 +42,8 @@ const TrafficSimulation: React.FC = () => {
     congested: { empty: 0, moderate: 0, congested: 0 },
   });
   const [mode, setMode] = useState<"static" | "dynamic">("dynamic");
+  const [lambdaArrival1, setLambdaArrival1] = useState<number>();
+  const [lambdaExit1, setLambdaExit1] = useState<number>();
 
   const updateTransitions = (
     prevState: StateTraffic,
@@ -124,8 +135,10 @@ const TrafficSimulation: React.FC = () => {
           : { totalVehicles: 0, state: "empty" };
 
       const { lambdaArrival, lambdaExit } =
-        mode === "dynamic"
+        mode === "dynamic" && lambdaArrival1 == null && lambdaExit1 == null
           ? getDynamicTrafficParameters(trafficData)
+          : lambdaArrival1 != null && lambdaExit1 != null
+          ? { lambdaArrival: lambdaArrival1, lambdaExit: lambdaExit1 }
           : getTrafficParameters(lastState.state);
 
       const arrivals = poissonRandom(lambdaArrival);
@@ -178,6 +191,29 @@ const TrafficSimulation: React.FC = () => {
     setTrafficData([]);
   };
 
+  const textFieldStyles = {
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "#D3D3D3 !important", // Light grey
+      },
+      "&:hover fieldset": {
+        borderColor: "#D3D3D3 !important",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#D3D3D3 !important",
+      },
+    },
+    "& label": {
+      color: "#D3D3D3",
+    },
+    "& label.Mui-focused": {
+      color: "#D3D3D3",
+    },
+    input: {
+      color: "white",
+    },
+  };
+
   return (
     <div className="container">
       <header className="header">
@@ -201,6 +237,7 @@ const TrafficSimulation: React.FC = () => {
       <main className="main-content">
         <div className="content-wrapper">
           {tab === 0 && <Info />}
+
           {tab === 1 && (
             <div className="space-y-4">
               <Controls
@@ -212,72 +249,94 @@ const TrafficSimulation: React.FC = () => {
                 onStop={stopSimulation}
                 onReset={resetSimulation}
               />
+
               <RadioGroup
                 row
                 value={mode}
                 onChange={(e) =>
                   setMode(e.target.value as "static" | "dynamic")
                 }
+                style={{
+                  justifyContent: "space-between",
+                  width: "100%",
+                  paddingBottom: "10px",
+                  paddingTop: "10px",
+                }}
               >
-                <FormControlLabel
-                  value="static"
-                  control={<Radio />}
-                  label="Static TPM"
-                />
-                <FormControlLabel
-                  value="dynamic"
-                  control={<Radio />}
-                  label="Dynamic TPM"
-                />
+                <Box display="flex" alignItems="center" gap={2}>
+                  <FormControlLabel
+                    value="static"
+                    control={<Radio />}
+                    label="Static TPM"
+                  />
+                  <FormControlLabel
+                    value="dynamic"
+                    control={<Radio />}
+                    label="Dynamic TPM"
+                  />
+                </Box>
+
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  width="45%"
+                  gap={2}
+                >
+                  <TextField
+                    type="number"
+                    label="Arrival Rate (λ)"
+                    value={lambdaArrival1}
+                    onChange={(e) =>
+                      setLambdaArrival1(parseFloat(e.target.value))
+                    }
+                    sx={textFieldStyles}
+                  />
+                  <TextField
+                    type="number"
+                    label="Exit Rate (μ)"
+                    value={lambdaExit1}
+                    onChange={(e) => setLambdaExit1(parseFloat(e.target.value))}
+                    sx={textFieldStyles}
+                  />
+                </Box>
               </RadioGroup>
+
               <p className="status-message">{statusMessage}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                <div style={{ width: 20, height: 40 }} />
-                <h3>
-                  Shows the number of vehicles arriving at each simulation
-                  timestep.
-                </h3>
-                <Chart
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ChartSection
+                  title="Vehicles Arrived"
+                  description="Shows the number of vehicles arriving at each simulation timestep."
                   data={trafficData}
                   dataKey="vehiclesArrived"
-                  title="Vehicles Arrived"
                   color="#4A90E2"
                 />
-                <div style={{ width: 20, height: 40 }} />
-                <h3>
-                  Displays how many vehicles exited the road during each
-                  timestep.
-                </h3>
-                <Chart
+
+                <ChartSection
+                  title="Vehicles Exited"
+                  description="Displays how many vehicles exited the road during each timestep."
                   data={trafficData}
                   dataKey="vehiclesExited"
-                  title="Vehicles Exited"
                   color="#F5A623"
                 />
-                <div style={{ width: 20, height: 40 }} />
-                <h3>
-                  Shows the number of vehicles on the road at each simulation
-                  timestep.
-                </h3>
-                <Chart
+
+                <ChartSection
+                  title="Total Vehicles"
+                  description="Shows the number of vehicles on the road at each simulation timestep."
                   data={trafficData}
                   dataKey="totalVehicles"
-                  title="Total Vehicles"
                   color="#D0021B"
                 />
-                <div style={{ width: 20, height: 40 }} />
-                <h3>
-                  Visualizes the categorized traffic state at each point in
-                  time.
-                </h3>
-                <Chart
+
+                <ChartSection
+                  title="Traffic State (0=Empty, 1=Moderate, 2=Congested)"
+                  description="Visualizes the categorized traffic state at each point in time."
                   data={trafficData.map((d) => ({
                     ...d,
                     stateNumeric:
                       d.state === "empty" ? 0 : d.state === "moderate" ? 1 : 2,
                   }))}
                   dataKey="stateNumeric"
-                  title="Traffic State (0=Empty, 1=Moderate, 2=Congested)"
                   color="#9013FE"
                 />
                 <div style={{ width: 20, height: 40 }} />
@@ -306,6 +365,7 @@ const TrafficSimulation: React.FC = () => {
               </div>
             </div>
           )}
+
           {tab === 2 && report && (
             <ReportPage
               totalTime={report.totalTime}
@@ -314,12 +374,14 @@ const TrafficSimulation: React.FC = () => {
               trafficData={trafficData}
             />
           )}
+
           {tab === 3 && (
             <Tpm
               useDefault={mode === "static"}
               tpm={mode === "dynamic" ? dynamicTPM : undefined}
             />
           )}
+
           {tab === 4 && (
             <MarkovChain tpm={mode === "dynamic" ? dynamicTPM : undefined} />
           )}
