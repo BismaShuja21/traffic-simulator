@@ -135,7 +135,7 @@ const TrafficSimulation: React.FC = () => {
           : { totalVehicles: 0, state: "empty" };
 
       const { lambdaArrival, lambdaExit } =
-        mode === "dynamic" && lambdaArrival1 == null && lambdaExit1 == null
+        mode === "dynamic" || lambdaArrival1 == null || lambdaExit1 == null
           ? getDynamicTrafficParameters(trafficData)
           : lambdaArrival1 != null && lambdaExit1 != null
           ? { lambdaArrival: lambdaArrival1, lambdaExit: lambdaExit1 }
@@ -149,8 +149,8 @@ const TrafficSimulation: React.FC = () => {
       const totalVehicles = lastState.totalVehicles + arrivals - exits;
 
       let nextState: StateTraffic;
-      if (totalVehicles < 5) nextState = "empty";
-      else if (totalVehicles < 12) nextState = "moderate";
+      if (totalVehicles < 7) nextState = "empty";
+      else if (totalVehicles < 22) nextState = "moderate";
       else nextState = "congested";
 
       updateTransitions(lastState.state, nextState);
